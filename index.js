@@ -78,6 +78,50 @@ function buildGallery(items) {
     updateInfo();
 }
 
+// Modal elements and handlers
+const modal = document.getElementById('modal');
+const modalImg = document.getElementById('modalImg');
+const modalCaption = document.getElementById('modalCaption');
+const modalClose = document.getElementById('modalClose');
+let lastFocused = null;
+
+function openModal(src, caption) {
+    if (!modal) return;
+    lastFocused = document.activeElement;
+    modal.classList.remove('hidden');
+    modal.setAttribute('aria-hidden', 'false');
+    modalImg.src = src;
+    modalImg.alt = caption || '';
+    modalCaption.textContent = caption || '';
+    modalClose.focus();
+}
+
+function closeModal() {
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.setAttribute('aria-hidden', 'true');
+    modalImg.src = '';
+    modalCaption.textContent = '';
+    if (lastFocused && lastFocused.focus) lastFocused.focus();
+}
+
+// open modal on double-click of an image
+gallery.addEventListener('dblclick', function (e) {
+    const t = e.target;
+    if (t && t.tagName === 'IMG') {
+        const src = t.src;
+        const cap = t.closest('li') && t.closest('li').querySelector('figcaption') ? t.closest('li').querySelector('figcaption').textContent : '';
+        openModal(src, cap);
+    }
+});
+
+// close via close button
+if (modalClose) modalClose.addEventListener('click', closeModal);
+// close via clicking outside content
+if (modal) modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
+// close on Escape
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && modal && !modal.classList.contains('hidden')) closeModal(); });
+
 // Update footer info using BOM navigator and first/last child navigation
 function updateInfo() {
     const ua = navigator.userAgent; // BOM usage
