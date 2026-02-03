@@ -84,8 +84,9 @@ const modalImg = document.getElementById('modalImg');
 const modalCaption = document.getElementById('modalCaption');
 const modalClose = document.getElementById('modalClose');
 let lastFocused = null;
+let currentModalIndex = null;
 
-function openModal(src, caption) {
+function openModal(src, caption, index) {
     if (!modal) return;
     lastFocused = document.activeElement;
     modal.classList.remove('hidden');
@@ -94,6 +95,7 @@ function openModal(src, caption) {
     modalImg.alt = caption || '';
     modalCaption.textContent = caption || '';
     modalClose.focus();
+    currentModalIndex = (typeof index === 'number') ? index : null;
 }
 
 function closeModal() {
@@ -111,7 +113,8 @@ gallery.addEventListener('dblclick', function (e) {
     if (t && t.tagName === 'IMG') {
         const src = t.src;
         const cap = t.closest('li') && t.closest('li').querySelector('figcaption') ? t.closest('li').querySelector('figcaption').textContent : '';
-        openModal(src, cap);
+        const idx = t.dataset.index ? Number(t.dataset.index) : null;
+        openModal(src, cap, idx);
     }
 });
 
@@ -119,8 +122,61 @@ gallery.addEventListener('dblclick', function (e) {
 if (modalClose) modalClose.addEventListener('click', closeModal);
 // close via clicking outside content
 if (modal) modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
-// close on Escape
-document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && modal && !modal.classList.contains('hidden')) closeModal(); });
+// keyboard handling for modal: Escape, Arrow navigation, and Tab focus trap
+document.addEventListener('keydown', function (e) {
+    if (!modal || modal.classList.contains('hidden')) return;
+    // Escape closes
+    if (e.key === 'Escape') {
+        closeModal();
+        return;
+    }
+    // Arrow navigation inside modal
+    if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        if (currentModalIndex !== null && galleryItems.length > 0) {
+            const next = (currentModalIndex + 1) % galleryItems.length;
+            showModalImage(next);
+        }
+        return;
+    }
+    if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        if (currentModalIndex !== null && galleryItems.length > 0) {
+            const prev = (currentModalIndex - 1 + galleryItems.length) % galleryItems.length;
+            showModalImage(prev);
+        }
+        return;
+    }
+    // Focus trap: keep Tab within modal
+    if (e.key === 'Tab') {
+        const focusable = modal.querySelectorAll('a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])');
+        const focusArray = Array.prototype.slice.call(focusable);
+        if (focusArray.length === 0) {
+            e.preventDefault();
+            return;
+        }
+        const idx = focusArray.indexOf(document.activeElement);
+        if (e.shiftKey) {
+            const prev = (idx <= 0) ? focusArray.length - 1 : idx - 1;
+            focusArray[prev].focus();
+            e.preventDefault();
+        } else {
+            const next = (idx === focusArray.length - 1) ? 0 : idx + 1;
+            focusArray[next].focus();
+            e.preventDefault();
+        }
+    }
+});
+
+// helper to show image by index inside modal
+function showModalImage(index) {
+    if (!modal || index == null || !galleryItems[index]) return;
+    const item = galleryItems[index];
+    modalImg.src = item.url;
+    modalImg.alt = item.caption || '';
+    modalCaption.textContent = item.caption || '';
+    currentModalIndex = index;
+}
 
 // Update footer info using BOM navigator and first/last child navigation
 function updateInfo() {
