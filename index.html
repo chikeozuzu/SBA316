@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>DOM Fun — Mini Gallery</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <header>
+        <h1 id="title">DOM Fun — Mini Gallery</h1>
+        <button id="themeToggle" aria-pressed="false">Toggle Theme</button>
+    </header>
+
+    <main>
+        <section class="controls">
+            <form id="addForm" novalidate>
+                <label for="imgUrl">Image URL</label>
+                <input id="imgUrl" name="imgUrl" type="url" required placeholder="https://..." pattern="https?://.+">
+
+                <label for="imgCaption">Caption</label>
+                <input id="imgCaption" name="imgCaption" type="text" required maxlength="80">
+
+                <button type="submit">Add Image</button>
+            </form>
+        </section>
+
+        <section class="gallery-section">
+            <div class="gallery-controls">
+                <button id="shuffleBtn">Shuffle Highlights</button>
+            </div>
+            <ul id="gallery" class="gallery" aria-live="polite"></ul>
+        </section>
+
+        <template id="figTemplate">
+            <li class="item">
+                <figure>
+                    <img src="" alt="">
+                    <figcaption></figcaption>
+                    <button class="removeBtn" title="Remove image">Remove</button>
+                </figure>
+            </li>
+        </template>
+    </main>
+
+    <footer>
+        <p id="info"></p>
+    </footer>
+
+    <script src="index.js"></script>
+</body>
+
+</html>
