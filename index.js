@@ -8,6 +8,7 @@ const shuffleBtn = document.getElementById('shuffleBtn');
 const themeToggle = document.getElementById('themeToggle');
 const info = document.getElementById('info');
 const resetBtn = document.getElementById('resetBtn');
+const undoBtn = document.getElementById('undoBtn');
 
 // Sample images (Pexels) — creative commons-friendly placeholders
 const samples = [
@@ -18,6 +19,18 @@ const samples = [
 
 // Persisted gallery items (kept in memory and saved to localStorage)
 let galleryItems = [];
+// last removed item for undo
+let lastRemoved = null;
+let lastRemovedTimer = null;
+
+function clearLastRemoved() {
+    lastRemoved = null;
+    if (lastRemovedTimer) {
+        clearTimeout(lastRemovedTimer);
+        lastRemovedTimer = null;
+    }
+    if (undoBtn) undoBtn.disabled = true;
+}
 
 function getStoredItems() {
     try {
@@ -107,6 +120,8 @@ addForm.addEventListener('submit', function (e) {
     imgUrlInput.value = '';
     imgCaptionInput.value = '';
     updateInfo();
+    // adding a new item clears the undo state
+    clearLastRemoved();
 });
 
 // Handle clicks in gallery (delegation): highlight image or remove item
@@ -124,8 +139,15 @@ gallery.addEventListener('click', function (e) {
             if (url) {
                 const idx = galleryItems.findIndex(it => it.url === url);
                 if (idx !== -1) {
+                    // capture removed for undo
+                    const removed = galleryItems[idx];
+                    lastRemoved = { item: removed, index: idx };
                     galleryItems.splice(idx, 1);
                     saveStoredItems(galleryItems);
+                    // enable undo for a short time
+                    if (undoBtn) undoBtn.disabled = false;
+                    if (lastRemovedTimer) clearTimeout(lastRemovedTimer);
+                    lastRemovedTimer = setTimeout(clearLastRemoved, 8000);
                 }
             }
             // demonstrate sibling navigation: move highlight to next sibling if exists
@@ -180,6 +202,20 @@ if (resetBtn) {
         // clear lastAdded marker
         try { localStorage.removeItem('lastAdded'); } catch (e) { }
         buildGallery(galleryItems);
+        // clear undo state when resetting
+        clearLastRemoved();
+    });
+}
+
+// Undo handler: restore last removed item (if any)
+if (undoBtn) {
+    undoBtn.addEventListener('click', function () {
+        if (!lastRemoved || !lastRemoved.item) return;
+        const idx = Math.min(Math.max(0, lastRemoved.index), galleryItems.length);
+        galleryItems.splice(idx, 0, lastRemoved.item);
+        saveStoredItems(galleryItems);
+        buildGallery(galleryItems);
+        clearLastRemoved();
     });
 }
 

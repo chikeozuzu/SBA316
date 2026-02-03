@@ -159,6 +159,10 @@ footer {
     background: #555;
 }
 
+.gallery-controls>button#undoBtn {
+    background: #f39c12;
+}
+
 .sr-only {
     position: absolute;
     width: 1px;
