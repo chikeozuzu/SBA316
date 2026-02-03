@@ -145,6 +145,20 @@ footer {
     margin-bottom: .5rem
 }
 
+.gallery-controls>button {
+    margin-right: .5rem;
+    padding: .45rem .6rem;
+    border-radius: 5px;
+    border: none;
+    background: #2b7a78;
+    color: white;
+    cursor: pointer;
+}
+
+.gallery-controls>button#resetBtn {
+    background: #555;
+}
+
 .sr-only {
     position: absolute;
     width: 1px;

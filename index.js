@@ -7,6 +7,7 @@ const template = document.getElementById('figTemplate');
 const shuffleBtn = document.getElementById('shuffleBtn');
 const themeToggle = document.getElementById('themeToggle');
 const info = document.getElementById('info');
+const resetBtn = document.getElementById('resetBtn');
 
 // Sample images (Pexels) — creative commons-friendly placeholders
 const samples = [
@@ -18,26 +19,26 @@ const samples = [
 // Persisted gallery items (kept in memory and saved to localStorage)
 let galleryItems = [];
 
-function getStoredItems(){
-    try{
+function getStoredItems() {
+    try {
         const raw = localStorage.getItem('galleryItems');
-        if(!raw) return null;
+        if (!raw) return null;
         return JSON.parse(raw);
-    }catch(e){
+    } catch (e) {
         return null;
     }
 }
 
-function saveStoredItems(items){
-    try{
+function saveStoredItems(items) {
+    try {
         localStorage.setItem('galleryItems', JSON.stringify(items));
-    }catch(e){
+    } catch (e) {
         // ignore storage errors
     }
 }
 
 // Build gallery using DocumentFragment and template.cloneNode
-function buildGallery(items){
+function buildGallery(items) {
     galleryItems = items.slice();
     gallery.innerHTML = '';
     const frag = document.createDocumentFragment();
@@ -46,7 +47,7 @@ function buildGallery(items){
         const img = li.querySelector('img');
         const cap = li.querySelector('figcaption');
         img.setAttribute('src', it.url);
-        img.setAttribute('alt', it.caption || `Picture ${i+1}`);
+        img.setAttribute('alt', it.caption || `Picture ${i + 1}`);
         img.dataset.index = i;
         li.dataset.url = it.url;
         cap.textContent = it.caption || '';
@@ -98,10 +99,10 @@ addForm.addEventListener('submit', function (e) {
     newItem.dataset.url = url;
     gallery.prepend(newItem);
     // update in-memory and persisted list
-    galleryItems.unshift({url, caption});
+    galleryItems.unshift({ url, caption });
     saveStoredItems(galleryItems);
     // save last added in localStorage (BOM)
-    try{ localStorage.setItem('lastAdded', url); }catch(e){ /* ignore */ }
+    try { localStorage.setItem('lastAdded', url); } catch (e) { /* ignore */ }
     // clear inputs
     imgUrlInput.value = '';
     imgCaptionInput.value = '';
@@ -120,19 +121,19 @@ gallery.addEventListener('click', function (e) {
         if (window.confirm('Remove this image?')) {
             // remove from persisted data if possible
             const url = li.dataset.url || (li.querySelector('img') && li.querySelector('img').src);
-            if(url){
+            if (url) {
                 const idx = galleryItems.findIndex(it => it.url === url);
-                if(idx !== -1){
-                    galleryItems.splice(idx,1);
+                if (idx !== -1) {
+                    galleryItems.splice(idx, 1);
                     saveStoredItems(galleryItems);
                 }
             }
             // demonstrate sibling navigation: move highlight to next sibling if exists
             const next = li.nextElementSibling;
             li.remove();
-            if(next){
+            if (next) {
                 const img = next.querySelector('img');
-                if(img) img.classList.add('highlight');
+                if (img) img.classList.add('highlight');
             }
             updateInfo();
         }
@@ -169,20 +170,33 @@ themeToggle.addEventListener('click', function () {
     themeToggle.setAttribute('aria-pressed', pressed);
 });
 
+// Reset gallery to initial samples (confirmation + persist)
+if (resetBtn) {
+    resetBtn.addEventListener('click', function () {
+        if (!window.confirm('Reset the gallery to the original sample images? This will overwrite your saved gallery.')) return;
+        // reset in-memory and persisted items
+        galleryItems = samples.slice();
+        saveStoredItems(galleryItems);
+        // clear lastAdded marker
+        try { localStorage.removeItem('lastAdded'); } catch (e) { }
+        buildGallery(galleryItems);
+    });
+}
+
 // If there's a saved lastAdded image, add it to top (demonstrate BOM localStorage read)
-window.addEventListener('load', function(){
+window.addEventListener('load', function () {
     const stored = getStoredItems();
     const last = localStorage.getItem('lastAdded');
     let items = [];
-    if(stored && Array.isArray(stored)){
+    if (stored && Array.isArray(stored)) {
         items = stored.slice();
     } else {
         items = [...samples];
-        if(last) items.unshift({url:last, caption:'(Last added)'});
+        if (last) items.unshift({ url: last, caption: '(Last added)' });
     }
     buildGallery(items);
     // ensure persisted list exists (first run)
-    if(!stored) saveStoredItems(items);
+    if (!stored) saveStoredItems(items);
 });
 
 // Respond to hash changes (demonstrate BOM location.hash and event)
