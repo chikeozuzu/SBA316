@@ -9,6 +9,7 @@ const themeToggle = document.getElementById('themeToggle');
 const info = document.getElementById('info');
 const resetBtn = document.getElementById('resetBtn');
 const undoBtn = document.getElementById('undoBtn');
+const undoTimer = document.getElementById('undoTimer');
 
 // Sample images (Pexels) — creative commons-friendly placeholders
 const samples = [
@@ -22,6 +23,8 @@ let galleryItems = [];
 // last removed item for undo
 let lastRemoved = null;
 let lastRemovedTimer = null;
+let undoRemaining = 0;
+let undoCountdown = null;
 
 function clearLastRemoved() {
     lastRemoved = null;
@@ -30,6 +33,11 @@ function clearLastRemoved() {
         lastRemovedTimer = null;
     }
     if (undoBtn) undoBtn.disabled = true;
+    if (undoCountdown) {
+        clearInterval(undoCountdown);
+        undoCountdown = null;
+    }
+    if (undoTimer) undoTimer.textContent = '';
 }
 
 function getStoredItems() {
@@ -144,10 +152,20 @@ gallery.addEventListener('click', function (e) {
                     lastRemoved = { item: removed, index: idx };
                     galleryItems.splice(idx, 1);
                     saveStoredItems(galleryItems);
-                    // enable undo for a short time
+                    // enable undo for a limited time (start 30s countdown)
                     if (undoBtn) undoBtn.disabled = false;
                     if (lastRemovedTimer) clearTimeout(lastRemovedTimer);
-                    lastRemovedTimer = setTimeout(clearLastRemoved, 8000);
+                    // initialize countdown
+                    undoRemaining = 30;
+                    if (undoTimer) undoTimer.textContent = `${undoRemaining}s`;
+                    if (undoCountdown) clearInterval(undoCountdown);
+                    undoCountdown = setInterval(() => {
+                        undoRemaining -= 1;
+                        if (undoTimer) undoTimer.textContent = undoRemaining > 0 ? `${undoRemaining}s` : '';
+                    }, 1000);
+                    lastRemovedTimer = setTimeout(() => {
+                        clearLastRemoved();
+                    }, 30000);
                 }
             }
             // demonstrate sibling navigation: move highlight to next sibling if exists
